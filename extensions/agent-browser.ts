@@ -56,14 +56,17 @@ async function runCommand(
   signal: AbortSignal | undefined,
   index: number,
   total: number,
-  onUpdate: ((update: string) => void) | undefined,
+  onUpdate: ((update: { content: Array<{ type: string; text: string }>; details?: Record<string, any> }) => void) | undefined,
 ): Promise<CommandResult> {
   const parts = commandStr.split(/\s+/);
   const action = parts[0].toLowerCase();
 
-  // Send progress update for batches
+  // Send progress update for batches (must be result-shaped, not a raw string)
   if (total > 1 && onUpdate) {
-    onUpdate(`[${index + 1}/${total}] Running: ${commandStr}`);
+    onUpdate({
+      content: [{ type: "text", text: `[${index + 1}/${total}] Running: ${commandStr}` }],
+      details: { _progress: `[${index + 1}/${total}] ${commandStr}` },
+    });
   }
 
   const result = await pi.exec("agent-browser", parts, {
