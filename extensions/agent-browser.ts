@@ -1,20 +1,32 @@
 import { readFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   truncateHead,
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
-} from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
-import { Type, type Static } from "@sinclair/typebox";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { Type, type Static } from "typebox";
 
 const TOOL_DESCRIPTION = `Browser automation via agent-browser CLI.
 Workflow: open URL → snapshot -i (get @refs like @e1) → interact → re-snapshot after page changes.
 Batch with 'commands' array or semicolons in 'command' to reduce round-trips.
-Commands: open <url>, snapshot -i, click <@ref>, fill <@ref> <text>, type <@ref> <text>, select <@ref> <value>, press <key>, scroll <dir> [px], get text|url|title [@ref], wait <@ref|ms>, screenshot [--full], close.`;
+Commands:
+  open <url>
+  snapshot -i - Interactive elements with @refs (always re-snapshot after actions)
+  click <@ref>
+  fill <@ref> <text> - Clear field and type
+  type <@ref> <text> - Type without clearing
+  select <@ref> <value> - Dropdown option
+  press <key> - Great for navigation keys.
+  scroll <dir> [px] - Scroll up/down/left/right
+  get text|url|title [@ref]
+  wait <@ref|ms> - Wait for element to appear, or sleep
+  screenshot [--full] - Capture viewport (or --full page)
+  close`;
 
 function writeTempFile(content: string, prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), `pi-browser-${prefix}-`));
