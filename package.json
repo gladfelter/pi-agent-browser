@@ -1,6 +1,6 @@
 {
   "name": "pi-agent-browser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Browser automation tool for pi — interactive browsing, screenshots with inline vision, and session cleanup via agent-browser CLI",
   "keywords": [
     "pi-package",

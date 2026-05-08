@@ -68,6 +68,23 @@ The typical workflow the LLM follows:
 5. **`screenshot`** — Get a visual of the page (returned as an inline image)
 6. **`close`** — Done
 
+### ⚡ Command Batching
+
+Reduce round-trips by sending multiple commands in a single call. Three ways to batch:
+
+```
+// 1. Array of commands (recommended)
+browser commands: ["open https://google.com", "snapshot -i", "screenshot"]
+
+// 2. Semicolon-separated string
+browser command: "open https://google.com; snapshot -i; screenshot"
+
+// 3. Single command (backward compatible)
+browser open https://google.com
+```
+
+When batching, commands execute sequentially. If one fails, the batch stops (fail-fast). Results include a summary with per-command status and any screenshots.
+
 ## Features
 
 ### 📸 Inline Screenshots
@@ -119,32 +136,36 @@ Any valid [agent-browser](https://www.npmjs.com/package/agent-browser) command w
 
 ## Examples
 
-### Search the web
+### Search the web (with batching)
 
 ```
 You: Search Google for "pi coding agent" and tell me the first result
 
-  browser  open https://www.google.com
-  browser  snapshot -i
-  browser  fill @e3 "pi coding agent"
-  browser  press Enter
-  browser  snapshot -i
-  browser  close
+  browser  commands: ["open https://www.google.com", "snapshot -i", "fill @e3 pi coding agent", "press Enter", "snapshot -i", "close"]
+
+Executed 6 of 6 commands | 45 interactive elements in last snapshot
 
 The first result is...
 ```
 
-### Fill out a form
+### Search the web (semicolon batch)
+
+```
+You: Search Google for "pi coding agent"
+
+  browser  command: "open https://www.google.com; snapshot -i; fill @e3 pi coding agent; press Enter; snapshot -i; close"
+
+Executed 6 of 6 commands | 45 interactive elements in last snapshot
+
+The first result is...
+```
+
+### Fill out a form (with batching)
 
 ```
 You: Go to httpbin.org/forms/post and fill out the form
 
-  browser  open https://httpbin.org/forms/post
-  browser  snapshot -i
-  browser  fill @e1 "John"
-  browser  fill @e2 "john@example.com"
-  browser  click @e5
-  browser  close
+  browser  commands: ["open https://httpbin.org/forms/post", "snapshot -i", "fill @e1 John", "fill @e2 john@example.com", "click @e5", "close"]
 ```
 
 ### Take a visual snapshot
@@ -152,10 +173,8 @@ You: Go to httpbin.org/forms/post and fill out the form
 ```
 You: Show me what the Anthropic homepage looks like
 
-  browser  open https://www.anthropic.com
-  browser  screenshot
+  browser  commands: ["open https://www.anthropic.com", "screenshot", "close"]
   // LLM sees the page and describes layout, content, design...
-  browser  close
 
 The Anthropic homepage features a clean design with...
 ```
@@ -176,7 +195,7 @@ The Anthropic homepage features a clean design with...
 ```
 pi-agent-browser/
 ├── extensions/
-│   └── agent-browser.ts    # The pi extension (single file, ~180 lines)
+│   └── agent-browser.ts    # The pi extension (single file, ~450 lines)
 ├── docs/
 │   └── plans/              # Implementation plans
 ├── package.json            # pi package manifest
@@ -193,6 +212,7 @@ The extension is a single TypeScript file that:
 5. **Truncates** large outputs to protect context windows
 6. **Renders** results with custom TUI formatting
 7. **Cleans up** the browser on `session_shutdown`
+8. **Batches** multiple commands: array (`commands: [...]`), semicolons (`"cmd1; cmd2"`), or single `command` string — fail-fast on errors
 
 ## Troubleshooting
 
